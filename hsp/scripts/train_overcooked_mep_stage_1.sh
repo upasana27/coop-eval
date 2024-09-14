@@ -3,7 +3,7 @@
 env="Overcooked"
 
 # unident_s, random1, random3, distant_tomato, many_orders
-layout=$1
+layout="random3"
 
 version="old"
 if [[ "${layout}" == "distant_tomato" || "${layout}" == "many_orders" ]]; then
@@ -29,4 +29,4 @@ CUDA_VISIBLE_DEVICES=1 python train/train_overcooked_mep.py --env_name ${env} --
 --population_yaml_path ${path}/${layout}/mep/s1/train.yml \
 --population_size 12 --adaptive_agent_name alice \
 --entropy_coef 0.01 --overcooked_version ${version} \
- --wandb_name "WANDB_NAME" --user_name "USER_NAME" 
+ --wandb_name "ubiswas" --user_name "ubiswas" 
