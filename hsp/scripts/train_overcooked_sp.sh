@@ -2,7 +2,7 @@
 env="Overcooked"
 
 # unident_s, random1, random3, distant_tomato, many_orders
-layout=$1
+layout="random3"
 
 version="old"
 if [[ "${layout}" == "distant_tomato" || "${layout}" == "many_orders" ]]; then
@@ -23,5 +23,5 @@ do
      --ppo_epoch 15 \
      --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --save_interval 25 --log_inerval 10 --use_recurrent_policy\
      --overcooked_version ${version} \
-     --wandb_name "WANDB_NAME" --user_name "USER_NAME" 
+     --wandb_name "ubiswas" --user_name "ubiswas" 
 done
