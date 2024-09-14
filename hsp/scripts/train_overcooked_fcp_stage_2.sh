@@ -3,7 +3,7 @@
 env="Overcooked"
 
 # unident_s, random1, random3, distant_tomato, many_orders
-layout=$1
+layout="random3"
 
 version="old"
 if [[ "${layout}" == "distant_tomato" || "${layout}" == "many_orders" ]]; then
@@ -31,4 +31,4 @@ CUDA_VISIBLE_DEVICES=0 python train/train_overcooked_adaptive.py --env_name ${en
 --stage 2 --save_interval 20 --log_interval 10 \
 --population_yaml_path ${path}/${layout}/fcp/s2/train.yml \
 --population_size 36 --adaptive_agent_name fcp_adaptive --use_agent_policy_id --overcooked_version ${version} \
---wandb_name "WANDB_NAME" --user_name "USER_NAME" 
+--wandb_name "ubiswas" --user_name "ubiswas" 
