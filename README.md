@@ -1,14 +1,15 @@
-# HSP
-This is a repository for Hidden-utility Self-Play.
+# Agent interdependencies
+This is a repository for evalutating SP, FCP, MEP and HSP on the interdependencies we define for a 2-agent planning problem.
 
 # Installation
 
 
 ```
-conda create -n hsp
-conda activate marl
+conda create -n hsp python=3.7
+conda activate hsp
 pip install torch==1.5.1+cu101 torchvision==0.6.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
-cd hsp
+git clone 
+cd HSP
 pip install -e . 
 pip install wandb icecream setproctitle gym seaborn tensorboardX slackweb psutil slackweb pyastar2d einops
 ```
@@ -24,7 +25,7 @@ All training scripts are under directory `hsp/scripts`. All methods consist of t
 
 ## Self-Play
 
-To train self-play policies, change `layout` to one of "unident_s"(Asymmetric Advantages), "random1"(Coordination Ring), "random3"(Counter Circuit), "distant_tomato"(Distant_Tomato) and "many_orders"(Many Orders) and run `./train_overcooked_sp.sh`.
+Run `./train_overcooked_sp.sh`.
 
 ## FCP
 
