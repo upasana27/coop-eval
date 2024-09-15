@@ -29,4 +29,4 @@ CUDA_VISIBLE_DEVICES=1 python train/train_overcooked_mep.py --env_name ${env} --
 --population_yaml_path ${path}/${layout}/mep/s1/train.yml \
 --population_size 13 --adaptive_agent_name alice \
 --entropy_coef 0.01 --overcooked_version ${version} \
- --wandb_name "ubiswas" --user_name "ubiswas" 
+ --wandb_name "sbhambr1" --user_name "sbhambr1" 

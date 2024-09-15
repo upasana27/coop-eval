@@ -31,4 +31,4 @@ CUDA_VISIBLE_DEVICES=0 python train/train_overcooked_adaptive.py --env_name ${en
 --stage 2 --save_interval 20 --log_interval 10 \
 --population_yaml_path ${path}/${layout}/fcp/s2/train.yml \
 --population_size 36 --adaptive_agent_name fcp_adaptive --use_agent_policy_id --overcooked_version ${version} \
---wandb_name "ubiswas" --user_name "ubiswas" 
+--wandb_name "sbhambr1" --user_name "sbhambr1" 
