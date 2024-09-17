@@ -8,7 +8,7 @@ This is a repository for evalutating SP, FCP, MEP and HSP on the interdependenci
 conda create -n hsp python=3.7
 conda activate hsp
 pip install torch==1.5.1+cu101 torchvision==0.6.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
-git clone 
+git clone https://github.com/upasana27/coop-eval.git
 cd HSP
 pip install -e . 
 pip install wandb icecream setproctitle gym seaborn tensorboardX slackweb psutil slackweb pyastar2d einops gym==0.25.2 absl-py tqdm scipy pygame IPython ipywidgets
