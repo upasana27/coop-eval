@@ -60,6 +60,7 @@ class PolicyPool:
 
     def load_population(self, population_yaml_path, evaluation=False, override_policy_config=dict()):
         # load population
+        # This is the function we don't want to get called. How to write a function which works for script only.
         warnings.warn("Policy pool currently loads all checkpoints into gpu, consider load into cpu latter...")
         population_config = yaml.load(open(population_yaml_path), yaml.Loader)
         if population_config is None:

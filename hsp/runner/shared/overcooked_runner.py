@@ -319,28 +319,25 @@ class OvercookedRunner(Runner):
         ic(best_sparse_r_agent1)
         ic(info)
 
-    def evaluate_one_episode_with_multi_policy(self, policy_pool: Dict, map_ea2p: Dict):
-        """Evaluate one episode with different policy for each agent.
-        Params:
-            policy_pool (Dict): a pool of policies. Each policy should support methods 'step' that returns actions given observation while maintaining hidden states on its own, and 'reset' that resets the hidden state.
-            map_ea2p (Dict): a mapping from (env_id, agent_id) to policy name
-        """
-        warnings.warn("Evaluation with multi policy is not compatible with async done.")
-        [policy.reset(self.n_eval_rollout_threads, self.num_agents) for policy_name, policy in policy_pool.items()]
-        for e in range(self.n_eval_rollout_threads):
-            for agent_id in range(self.num_agents):
-                if not map_ea2p[(e, agent_id)].startswith("script:"):
-                    policy_pool[map_ea2p[(e, agent_id)]].register_control_agent(e, agent_id)
-
+    def evaluate_script_policy_with_script_policy(self, map_ea2p):
+        ''' 
+        reset environment
+        Initialize script polices (if required)
+        while run not over:
+            loop over agents:
+                action = policy(state)
+        '''
+        print("use single polic")
+        # policy pool already set up with the scripted policies
         eval_env_infos = defaultdict(list)
         reset_choose = np.ones(self.n_eval_rollout_threads) == 1
-        eval_obs, _, _ = self.eval_envs.reset(reset_choose)
-
-        extract_info_keys = [] # ['stuck', 'can_begin_cook']
+        extract_info_keys = []
         infos = None
+        eval_obs, _, _ = self.eval_envs.reset(reset_choose)
         for eval_step in range(self.all_args.episode_length):
             # print("Step", eval_step)
             eval_actions = np.full((self.n_eval_rollout_threads, self.num_agents, 1), fill_value=0).tolist()
+            #enumerate policy pool
             for policy_name, policy in policy_pool.items():
                 if len(policy.control_agents) > 0:
                     policy.prep_rollout()
@@ -414,27 +411,133 @@ class OvercookedRunner(Runner):
         # print(eval_env_infos)
 
         return eval_env_infos
+     
+
+            
+
+
+    def evaluate_one_episode_with_multi_policy(self, policy_pool: Dict, map_ea2p: Dict):
+        """Evaluate one episode with different policy for each agent.
+        Params:
+            policy_pool (Dict): a pool of policies. Each policy should support methods 'step' that returns actions given observation while maintaining hidden states on its own, and 'reset' that resets the hidden state.
+            map_ea2p (Dict): a mapping from (env_id, agent_id) to policy name
+        """
+        warnings.warn("Evaluation with multi policy is not compatible with async done.")
+        [policy.reset(self.n_eval_rollout_threads, self.num_agents) for policy_name, policy in policy_pool.items()]
+        for e in range(self.n_eval_rollout_threads):
+            for agent_id in range(self.num_agents):
+                if not map_ea2p[(e, agent_id)].startswith("script:"):
+                    # point to agent id name
+                    policy_pool[map_ea2p[(e, agent_id)]].register_control_agent(e, agent_id)
+        eval_env_infos = defaultdict(list)
+        reset_choose = np.ones(self.n_eval_rollout_threads) == 1
+        eval_obs, _, _ = self.eval_envs.reset(reset_choose)
+
+        extract_info_keys = [] # ['stuck', 'can_begin_cook']
+        infos = None
+        for eval_step in range(self.all_args.episode_length):
+            # print("Step", eval_step)
+            eval_actions = np.full((self.n_eval_rollout_threads, self.num_agents, 1), fill_value=0).tolist()
+            #enumerate policy pool
+            for policy_name, policy in policy_pool.items():
+                if len(policy.control_agents) > 0:
+                    policy.prep_rollout()
+                    policy.to(self.device)
+                    obs_lst = [eval_obs[e][a] for (e, a) in policy.control_agents]
+                    info_lst = None
+                    if infos is not None:
+                        info_lst = {k: [infos[e][k][a] for e, a in policy.control_agents] for k in extract_info_keys}
+                    agents = policy.control_agents
+                    actions = policy.step(np.stack(obs_lst, axis=0), agents, info = info_lst, deterministic = not self.all_args.eval_stochastic)
+                    for action, (e, a) in zip(actions, agents):
+                        eval_actions[e][a] = action
+            # Observe reward and next obs
+            eval_actions = np.array(eval_actions)
+            #each step of eval_envs will give the info (with the shaped info too)
+            eval_obs, eval_share_obs, eval_rewards, eval_dones, eval_infos, eval_available_actions = self.eval_envs.step(eval_actions)
+
+            infos = eval_infos
+
+        if self.all_args.overcooked_version == "old":
+            shaped_info_keys = [
+                "put_onion_on_X",
+                # "put_tomato_on_X",
+                "put_dish_on_X",
+                "put_soup_on_X",
+                "pickup_onion_from_X",
+                "pickup_onion_from_O",
+                # "pickup_tomato_from_X",
+                # "pickup_tomato_from_T",
+                "pickup_dish_from_X",
+                "pickup_dish_from_D",
+                "pickup_soup_from_X",
+                "USEFUL_DISH_PICKUP", # counted when #taken_dishes < #cooking_pots + #partially_full_pots and no dishes on the counter
+                "SOUP_PICKUP", # counted when soup in the pot is picked up (not a soup placed on the table)
+                "PLACEMENT_IN_POT", # counted when some ingredient is put into pot
+                "delivery"
+            ]
+        else:
+            shaped_info_keys = [
+                "put_onion_on_X",
+                "put_tomato_on_X",
+                "put_dish_on_X",
+                "put_soup_on_X",
+                "pickup_onion_from_X",
+                "pickup_onion_from_O",
+                "pickup_tomato_from_X",
+                "pickup_tomato_from_T",
+                "pickup_dish_from_X",
+                "pickup_dish_from_D",
+                "pickup_soup_from_X",
+                "USEFUL_DISH_PICKUP", # counted when #taken_dishes < #cooking_pots + #partially_full_pots and no dishes on the counter
+                "SOUP_PICKUP", # counted when soup in the pot is picked up (not a soup placed on the table)
+                "PLACEMENT_IN_POT", # counted when some ingredient is put into pot
+                "viable_placement",
+                "optimal_placement",
+                "catastrophic_placement",
+                "useless_placement",
+                "potting_onion",
+                "potting_tomato",
+                "delivery",
+            ]
+        for eval_info in eval_infos:
+            for a in range(self.num_agents):
+                for i, k in enumerate(shaped_info_keys):
+                    eval_env_infos[f'eval_ep_{k}_by_agent{a}'].append(eval_info['episode']['ep_category_r_by_agent'][a][i])
+                eval_env_infos[f'eval_ep_sparse_r_by_agent{a}'].append(eval_info['episode']['ep_sparse_r_by_agent'][a])
+                eval_env_infos[f'eval_ep_shaped_r_by_agent{a}'].append(eval_info['episode']['ep_shaped_r_by_agent'][a])
+            eval_env_infos['eval_ep_sparse_r'].append(eval_info['episode']['ep_sparse_r'])
+            eval_env_infos['eval_ep_shaped_r'].append(eval_info['episode']['ep_shaped_r']) 
+        # print(eval_env_infos)
+        return eval_env_infos
     
     def evaluate_with_multi_policy(self, policy_pool = None, map_ea2p = None, num_eval_episodes = None):
         """Evaluate with different policy for each agent.
         """
+        #initialize with None policy pool. where is policy initialized ----- set_maep sets the policy pools. For only scripted agents, policy pool is already initialized, we don't have to register again.
         policy_pool = policy_pool or self.policy.policy_pool
         map_ea2p = map_ea2p or self.policy.map_ea2p
         num_eval_episodes = num_eval_episodes or self.all_args.eval_episodes
         eval_infos = defaultdict(list)
+        info_by_ep = []
         for episode in range(num_eval_episodes // self.n_eval_rollout_threads):
+            #get info for one episode
             eval_env_info = self.evaluate_one_episode_with_multi_policy(policy_pool, map_ea2p)
-            for k, v in eval_env_info.items():
+            info_by_ep.append(eval_env_info)
+            #for each key-value pair in info for a single episode
+            for key, value in eval_env_info.items():
+                # for each rollout thread 
                 for e in range(self.n_eval_rollout_threads):
+                    # get names of the agent IG
                     agent0, agent1 = map_ea2p[(e, 0)], map_ea2p[(e, 1)]
-                    for log_name in [f"{agent0}-{agent1}-{k}", f"agent0-{agent0}-{k}", f"agent1-{agent1}-{k}", f"either-{agent0}-{k}", f"either-{agent1}-{k}"]:
-                        eval_infos[log_name].append(v[e])
-        eval_infos = {k: [np.mean(v),] for k, v in eval_infos.items()}
-
-        print(eval_infos)
+                    #obviously take 
+                    for log_name in [f"{agent0}-{agent1}-{key}", f"agent0-{agent0}-{key}", f"agent1-{agent1}-{key}", f"either-{agent0}-{key}", f"either-{agent1}-{key}"]:
+                        eval_infos[log_name].append(value[e])
+        # eval_infos = {k: [np.mean(v),] for k, v in eval_infos.items()}
+        # print(eval_infos)
         print({k: v for k, v in eval_infos.items() if 'ep_sparse_r' in k})
 
-        return eval_infos
+        return info_by_ep
         
     def naive_train_with_multi_policy(self, reset_map_ea2t_fn = None, reset_map_ea2p_fn = None):
         """This is a naive training loop using TrainerPool and PolicyPool. 

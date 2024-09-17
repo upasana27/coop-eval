@@ -536,7 +536,7 @@ class Overcooked(gym.Env):
                 shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
         
         if self.store_traj:
-            self.traj_to_store.append(info["shaped_info_by_agnet"])
+            self.traj_to_store.append(info["shaped_info_by_agent"])
             self.traj_to_store.append(self.base_env.state.to_dict())
 
         reward = [[shaped_reward_p0], [shaped_reward_p1]]

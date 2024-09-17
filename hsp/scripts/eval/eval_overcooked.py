@@ -70,7 +70,7 @@ def main(args):
     # cuda
     if all_args.cuda and torch.cuda.is_available():
         print("choose to use gpu...")
-        device = torch.device("cuda:0")
+        device = torch.device("cpu")
         torch.set_num_threads(all_args.n_training_threads)
         if all_args.cuda_deterministic:
             torch.backends.cudnn.benchmark = False
@@ -88,6 +88,7 @@ def main(args):
 
     # wandb
     if all_args.use_wandb:
+        print("here?")
         run = wandb.init(config=all_args,
                          project=all_args.env_name,
                          entity=all_args.wandb_name,
@@ -100,6 +101,7 @@ def main(args):
                          job_type="training",
                          reinit=True)
     else:
+        print("here?")
         if not run_dir.exists():
             curr_run = 'run1'
         else:
@@ -142,9 +144,7 @@ def main(args):
 
     runner = Runner(config)
 
-    # load population
-    print("population_yaml_path: ",all_args.population_yaml_path)
-    featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True)
+    
 
     # configure mapping from (env_id, agent_id) to policy_name
     map_ea2p = dict()
@@ -153,13 +153,22 @@ def main(args):
         map_ea2p[(e, 1)] = all_args.agent1_policy_name
     runner.policy.set_map_ea2p(map_ea2p)
 
-    # set featurize_type of eval threaded env
-    agent0_featurize_type = featurize_type.get(all_args.agent0_policy_name, "ppo")
-    agent1_featurize_type = featurize_type.get(all_args.agent1_policy_name, "ppo")
+    # set featurize_type of eval threaded env, we get this from runner.policy.load_population. This is the function we don't want to get called.
+    if not all_args.agent0_policy_name.startswith("script:"):
+        # load population
+        print("population_yaml_path: ",all_args.population_yaml_path)
+        featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True)   
+        agent0_featurize_type = featurize_type.get(all_args.agent0_policy_name, "ppo")
+        agent1_featurize_type = featurize_type.get(all_args.agent1_policy_name, "ppo")
+    else:
+        agent0_featurize_type = "ppo"
+        agent1_featurize_type = "ppo"
+    # this function uses each agent's featurize type
     eval_envs.reset_featurize_type([(agent0_featurize_type, agent1_featurize_type) for _ in range(all_args.n_eval_rollout_threads)])
-
-    runner.evaluate_with_multi_policy()
-
+    
+    info = runner.evaluate_with_multi_policy()
+    with open('./data/info.pkl', 'wb') as f:
+        pickle.dump(info, f)
     if envs is not None:
         # post process
         envs.close()
