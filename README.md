@@ -11,7 +11,7 @@ pip install torch==1.5.1+cu101 torchvision==0.6.1+cu101 -f https://download.pyto
 git clone 
 cd HSP
 pip install -e . 
-pip install wandb icecream setproctitle gym seaborn tensorboardX slackweb psutil slackweb pyastar2d einops
+pip install wandb icecream setproctitle gym seaborn tensorboardX slackweb psutil slackweb pyastar2d einops gym==0.25.2 absl-py tqdm scipy pygame IPython ipywidgets
 ```
 
 We use [wandb](https://wandb.ai) to monitor logs. See the the [official website](https://wandb.ai) and the code for some examples.
