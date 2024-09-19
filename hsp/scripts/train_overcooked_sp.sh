@@ -2,8 +2,8 @@
 env="Overcooked"
 
 # unident_s(0), random1(2), random3(3), distant_tomato(4), many_orders(5)
-layout="many_orders"
-cuda_device=5
+layout="random3"
+cuda_device=3
 
 version="old"
 if [[ "${layout}" == "distant_tomato" || "${layout}" == "many_orders" ]]; then
