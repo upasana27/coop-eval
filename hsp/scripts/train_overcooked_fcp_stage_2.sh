@@ -2,8 +2,9 @@
 #!/bin/bash
 env="Overcooked"
 
-# unident_s, random1, random3, distant_tomato, many_orders
+# unident_s, random1, random3(1), distant_tomato, many_orders
 layout="random3"
+cuda_device=1
 
 version="old"
 if [[ "${layout}" == "distant_tomato" || "${layout}" == "many_orders" ]]; then
@@ -19,12 +20,12 @@ algo="adaptive"
 exp="fcp"
 stage="S2"
 seed=1
-path=../policy_pool
+path=hsp/policy_pool
 
 export POLICY_POOL=${path}
 
 echo "env is ${env}, layout is ${layout}, algo is ${algo}, exp is ${exp}, seed is ${seed}, stage is ${stage}"
-CUDA_VISIBLE_DEVICES=0 python train/train_overcooked_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}-${stage}" --layout_name ${layout} --num_agents ${num_agents} \
+CUDA_VISIBLE_DEVICES=${cuda_device} python hsp/scripts/train/train_overcooked_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}-${stage}" --layout_name ${layout} --num_agents ${num_agents} \
 --seed 1 --n_training_threads 1 --num_mini_batch 1 --episode_length 400 --num_env_steps 100000000 \
 --ppo_epoch 15 --reward_shaping_horizon ${reward_shaping_horizon} \
 --n_rollout_threads 300 --train_env_batch 1 \
